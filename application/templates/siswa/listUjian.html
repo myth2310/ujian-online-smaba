@@ -77,8 +77,7 @@
         jamMulai.setMinutes(parseInt(waktuUjianParts[1]));
 
         if (waktuSekarang < waktuUjian) {
-            var hariUjian = datadate.toLocaleTimeString('id-ID', { hour: 'numeric', minute: 'numeric', hour12: true });
-            swal("Peringatan !", "Maaf, belum saatnya untuk memulai ujian. ujian mulai tanggal "+ hariUjian +".", "warning");
+            swal("Peringatan !", "Maaf, belum saatnya untuk memulai ujian. ujian mulai tanggal", "warning");
         } else if (jamSekarang < jamMulai) {
             var jamMulaiFormatted = jamMulai.toLocaleTimeString('id-ID', { hour: 'numeric', minute: 'numeric', hour12: true });
             swal("Peringatan !", "Ujian akan dapat dimulai pada pukul " + jamMulaiFormatted + ".", "warning");

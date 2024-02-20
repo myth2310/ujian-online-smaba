@@ -2,18 +2,17 @@
 
 {% block content %}
 
-<div class="container-fluid">  
-    
+<div class="container-fluid">
     {% if data.email_ortu == None %}
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
         <strong>Peringatan !</strong> Harap lengkapi data informasi orang tua sebelum mulai ujian
     </div>
     {% else %}
     {% endif %}
-
     <div class="card">
         <div class="card-body">
-            <div class="float-end"><a href="/form-edit-profil/{{data.id_user}}" class="btn btn-warning">Edit Data Diri</a></div> 
+            <div class="float-end"><a href="/form-edit-profil/{{data.id_user}}" class="btn btn-warning">Edit Data
+                    Diri</a></div>
             <div class="row pt-4">
                 <div class="col-3">
                     <div class="text-center">

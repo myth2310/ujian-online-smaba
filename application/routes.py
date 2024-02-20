@@ -6,8 +6,7 @@ import hashlib
 import os
 from datetime import datetime
 from flask_mail import Mail, Message
-# import requests
-# from twilio.rest import Client
+import pandas as pd
 
 app.secret_key = 'your_secret_key'
 
@@ -223,20 +222,40 @@ def jurusan():
         return redirect(url_for('login'))
 
 #Page Guru
+# @app.route('/hasil')
+# def hasilUjian():
+#     if 'islogin' in session:
+#         curl = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+#         query = "SELECT hasil_ujian.*, users.nama ,kelas.kelas FROM hasil_ujian \
+#          JOIN kategori ON hasil_ujian.id_kategori = kategori.id_kategori \
+#          JOIN users ON kategori.id_user = users.id_user and hasil_ujian.id_user = users.id_user \
+#          JOIN kelas ON users.id_kelas = users.id_kelas \
+#          WHERE kategori.id_user = %s"
+#         data = (session['id_user'],)
+#         curl.execute(query, data)
+#         hasil_ujian = curl.fetchall()
+#         print(hasil_ujian)
+#         return render_template('guru/hasilUjian.html',hasil_ujian=hasil_ujian)
+#     else:
+#         return redirect(url_for('login'))
+    
 @app.route('/hasil')
 def hasilUjian():
     if 'islogin' in session:
         curl = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        query = "SELECT hasil_ujian.*,users.nama,kelas.kelas FROM hasil_ujian \
-         JOIN kategori ON hasil_ujian.id_kategori = kategori.id_kategori \
-         JOIN users ON kategori.id_user = users.id_user \
-         JOIN kelas ON users.id_kelas = users.id_kelas \
-         WHERE kategori.id_user = %s"
+        query = """
+            SELECT hasil_ujian.*, users.nama, kelas.kelas
+            FROM hasil_ujian
+            LEFT JOIN kategori ON hasil_ujian.id_kategori = kategori.id_kategori
+            LEFT JOIN users ON hasil_ujian.id_user = users.id_user
+            LEFT JOIN kelas ON users.id_kelas = kelas.id_kelas
+            WHERE kategori.id_user = %s
+        """
         data = (session['id_user'],)
         curl.execute(query, data)
         hasil_ujian = curl.fetchall()
         print(hasil_ujian)
-        return render_template('guru/hasilUjian.html',hasil_ujian=hasil_ujian)
+        return render_template('guru/hasilUjian.html', hasil_ujian=hasil_ujian)
     else:
         return redirect(url_for('login'))
     
@@ -290,7 +309,7 @@ def viewUjian(id_kategori):
         curl.execute(query, (id_kategori,))
         detail = curl.fetchone()
 
-        return render_template('guru/tinjau.html', soal=soal,detail=detail,nomor_soal=nomor_soal,prev_data=prev_data, next_data=next_data)
+        return render_template('guru/tinjau.html', soal=soal,detail=detail)
     else:
         return redirect(url_for('login'))
 
@@ -484,6 +503,73 @@ def insertUser():
     cur.execute("INSERT INTO users (nama,email,status,level,id_mapel,id_jurusan,id_kelas,password) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",(nama,email,status,level,id_mapel,id_jurusan,id_kelas,hashed_password))
     mysql.connection.commit()
     return redirect(url_for('home'))
+
+@app.route('/insert-siswa-from-excel', methods=['POST'])
+def insert_siswa_from_excel():
+    try:
+        excel_file = request.files['file']
+        if excel_file:
+            df = pd.read_excel(excel_file)
+
+            required_columns = ['nama', 'email', 'status', 'level', 'id_mapel', 'id_jurusan', 'id_kelas', 'password']
+            for column in required_columns:
+                if column not in df.columns:
+                    return f"Error: Column '{column}' not found in the Excel file."
+            for index, row in df.iterrows():
+                nama = row['nama']
+                email = row['email']
+                status = row['status']
+                level = row['level']
+                id_mapel = row['id_mapel']
+                id_jurusan = row['id_jurusan']
+                id_kelas = row['id_kelas']
+                password = row['password']
+                hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+                cur = mysql.connection.cursor()
+                cur.execute("INSERT INTO users (nama, email, status, level, id_mapel, id_jurusan, id_kelas, password) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (nama, email, status, level, id_mapel, id_jurusan, id_kelas, hashed_password))
+                mysql.connection.commit()
+                flash('Data Siswa Berhasil diexport')
+
+            return redirect(url_for('dataSiswa'))
+        else:
+            return "No file provided."
+    except Exception as e:
+        return f"Error: {str(e)}"
+    
+@app.route('/insert-guru-from-excel', methods=['POST'])
+def insert_guru_from_excel():
+    try:
+        excel_file = request.files['file']
+        if excel_file:
+            df = pd.read_excel(excel_file)
+
+            required_columns = ['nama', 'email', 'status', 'level', 'id_mapel', 'id_jurusan', 'id_kelas', 'password']
+            for column in required_columns:
+                if column not in df.columns:
+                    return f"Error: Column '{column}' not found in the Excel file."
+            for index, row in df.iterrows():
+                nama = row['nama']
+                email = row['email']
+                status = row['status']
+                level = row['level']
+                id_mapel = row['id_mapel']
+                id_jurusan = row['id_jurusan']
+                id_kelas = row['id_kelas']
+                password = row['password']
+                hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+                cur = mysql.connection.cursor()
+                cur.execute("INSERT INTO users (nama, email, status, level, id_mapel, id_jurusan, id_kelas, password) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (nama, email, status, level, id_mapel, id_jurusan, id_kelas, hashed_password))
+                mysql.connection.commit()
+                flash('Data Guru Berhasil diexport')
+
+            return redirect(url_for('dataGuru'))
+        else:
+            return "No file provided."
+    except Exception as e:
+        return f"Error: {str(e)}"
+
 
 @app.route('/update-user/<int:id_user>', methods=['POST'])
 def updateUser(id_user):
@@ -679,7 +765,6 @@ def viewSoal(id_soal):
     kategori = curl.fetchall()
     return render_template('guru/editSoal.html', data=data,kategori=kategori)
 
-
 #Auth/Login
 @app.route('/action-login', methods=['GET', 'POST'])
 def actionLogin():
@@ -740,19 +825,6 @@ def calculate_score(user_answers, correct_answers):
             else:
                 wrong_count += 1
     return correct_count, wrong_count
-
-# Fungsi pengiriman pesan WhatsApp
-# def send_whatsapp_message(body,to_number):
-#     account_sid = 'AC000d3808cdccad5d9f40263b14919d05'
-#     auth_token = '2a215775b7305df78588878f710671d3'
-#     client = Client(account_sid, auth_token)
-
-#     message = client.messages.create(
-#         from_='whatsapp:+14155238886',
-#         body=body,
-#         to=f'whatsapp:+{to_number}'
-#     )
-#     return message.sid
 
 @app.route('/submit-quiz/<int:id_kategori>', methods=['POST'])
 def submit_quiz(id_kategori):

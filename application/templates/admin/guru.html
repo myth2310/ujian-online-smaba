@@ -2,6 +2,22 @@
 
 {% block content %}
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<script>
+  Swal.fire({
+    text: "{{ message }}",
+    icon: "{{ 'error' if category == 'error' else 'success' }}",
+    title: "Informasi!",
+    showConfirmButton: false,
+    timer: 1500
+  });
+</script>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
 <div class="page-breadcrumb">
     <div class="row">
         <div class="col-12 d-flex no-block align-items-center">
@@ -21,7 +37,25 @@
 <div class="container-fluid">
     <div class="card">
         <div class="card-body">
-            <a href="{{url_for('formRegistrasi')}}" class="btn btn-primary mb-4">Tambah Users</a>
+            <div class="row">
+                <div class="col-2">
+                    <a href="{{url_for('formRegistrasi')}}" class="btn btn-primary mb-4">Tambah Guru</a>
+                </div>
+                <div class="col-9">
+                    <div class="col-9">
+                        <form method="POST" action="/insert-guru-from-excel" enctype="multipart/form-data">
+                            <div class="row">
+                                <div class="col">
+                                    <input type="file" name="file" class="form-control" accept=".xlsx, .xls" required>
+                                </div>
+                                <div class="col">
+                                    <button type="submit" class="btn btn-success text-white">Export Data</button>
+                                </div>
+                            </div>          
+                        </form>
+                    </div>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table id="zero_config" class="table table-striped table-bordered">
                     <thead>
